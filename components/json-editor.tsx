@@ -166,10 +166,10 @@ export function JsonEditor() {
               <Trash2 className="h-3 w-3" />
             </Button>
           </div>
-          <div className="ml-4 space-y-2">
+          <div className="ml-2 space-y-2">
             {value.map((item, index) => (
               <div key={index} className="flex items-start gap-2">
-                <Label className="text-xs text-muted-foreground min-w-8">[{index}]</Label>
+                <Label className="text-xs text-muted-foreground min-w-6">[{index}]</Label>
                 <div className="flex-1">{renderJsonValue(item, [...path, index.toString()])}</div>
               </div>
             ))}
@@ -187,10 +187,10 @@ export function JsonEditor() {
               <Trash2 className="h-3 w-3" />
             </Button>
           </div>
-          <div className="ml-4 space-y-2">
+          <div className="ml-2 space-y-2">
             {Object.entries(value).map(([key, val]) => (
               <div key={key} className="flex items-start gap-2">
-                <Label className="text-xs text-muted-foreground min-w-20 font-mono">{key}:</Label>
+                <Label className="text-xs text-muted-foreground min-w-16 font-mono">{key}:</Label>
                 <div className="flex-1">{renderJsonValue(val, [...path, key])}</div>
               </div>
             ))}
