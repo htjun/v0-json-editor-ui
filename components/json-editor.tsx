@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Trash2, Plus } from "lucide-react"
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray
@@ -33,25 +34,30 @@ export function JsonEditor() {
   const [jsonData, setJsonData] = useState<JsonValue>(defaultJson)
   const [rawText, setRawText] = useState(JSON.stringify(defaultJson, null, 2))
   const [error, setError] = useState<string | null>(null)
-  const [newKey, setNewKey] = useState("") // Moved useState to top level
+  const [newKey, setNewKey] = useState("")
 
-  const handleModeToggle = useCallback(() => {
-    if (mode === "ui") {
-      // Switching to raw mode
-      setRawText(JSON.stringify(jsonData, null, 2))
-      setMode("raw")
-    } else {
-      // Switching to UI mode
-      try {
-        const parsed = JSON.parse(rawText)
-        setJsonData(parsed)
-        setError(null)
-        setMode("ui")
-      } catch (err) {
-        setError("Invalid JSON format")
+  const handleModeChange = useCallback(
+    (value: string) => {
+      const newMode = value as "raw" | "ui"
+
+      if (mode === "ui" && newMode === "raw") {
+        // Switching to raw mode
+        setRawText(JSON.stringify(jsonData, null, 2))
+        setMode("raw")
+      } else if (mode === "raw" && newMode === "ui") {
+        // Switching to UI mode
+        try {
+          const parsed = JSON.parse(rawText)
+          setJsonData(parsed)
+          setError(null)
+          setMode("ui")
+        } catch (err) {
+          setError("Invalid JSON format")
+        }
       }
-    }
-  }, [mode, jsonData, rawText])
+    },
+    [mode, jsonData, rawText],
+  )
 
   const handleRawTextChange = useCallback((value: string) => {
     setRawText(value)
@@ -169,7 +175,6 @@ export function JsonEditor() {
           <div className="ml-2 space-y-2">
             {value.map((item, index) => (
               <div key={index} className="flex items-start gap-2">
-                <Label className="text-xs text-muted-foreground min-w-6">[{index}]</Label>
                 <div className="flex-1">{renderJsonValue(item, [...path, index.toString()])}</div>
               </div>
             ))}
@@ -181,12 +186,14 @@ export function JsonEditor() {
     if (typeof value === "object") {
       return (
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary">Object ({Object.keys(value).length})</Badge>
-            <Button size="sm" variant="ghost" onClick={() => deleteJsonKey(path)} className="h-6 w-6 p-0">
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
+          {path.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">Object ({Object.keys(value).length})</Badge>
+              <Button size="sm" variant="ghost" onClick={() => deleteJsonKey(path)} className="h-6 w-6 p-0">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
           <div className="ml-2 space-y-2">
             {Object.entries(value).map(([key, val]) => (
               <div key={key} className="flex items-start gap-2">
@@ -224,26 +231,28 @@ export function JsonEditor() {
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Badge variant={mode === "raw" ? "default" : "secondary"}>{mode === "raw" ? "Raw JSON" : "UI Editor"}</Badge>
-          {error && <Badge variant="destructive">{error}</Badge>}
+      <Tabs value={mode} onValueChange={handleModeChange} className="w-full">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">{error && <Badge variant="destructive">{error}</Badge>}</div>
+          <TabsList className="grid w-48 grid-cols-2">
+            <TabsTrigger value="ui">UI Editor</TabsTrigger>
+            <TabsTrigger value="raw">Raw JSON</TabsTrigger>
+          </TabsList>
         </div>
-        <Button onClick={handleModeToggle} variant="outline">
-          Switch to {mode === "raw" ? "UI" : "Raw"} Mode
-        </Button>
-      </div>
 
-      {mode === "raw" ? (
-        <Textarea
-          value={rawText}
-          onChange={(e) => handleRawTextChange(e.target.value)}
-          className="min-h-96 font-mono text-sm"
-          placeholder="Enter JSON here..."
-        />
-      ) : (
-        <div className="space-y-4 max-h-96 overflow-y-auto">{renderJsonValue(jsonData)}</div>
-      )}
+        <TabsContent value="raw" className="mt-0">
+          <Textarea
+            value={rawText}
+            onChange={(e) => handleRawTextChange(e.target.value)}
+            className="min-h-96 font-mono text-sm"
+            placeholder="Enter JSON here..."
+          />
+        </TabsContent>
+
+        <TabsContent value="ui" className="mt-0">
+          <div className="space-y-4 max-h-96 overflow-y-auto">{renderJsonValue(jsonData)}</div>
+        </TabsContent>
+      </Tabs>
     </Card>
   )
 }
